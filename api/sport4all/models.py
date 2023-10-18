@@ -5,13 +5,13 @@ class PrecioH(models.Model):
     precio = models.FloatField()
 
     def __str__(self):
-        return self.precio
+        return str(self.precio)
     
 class Iva(models.Model):
     porcentaje = models.FloatField()
 
     def __str__(self):
-        return self.porcentaje
+        return str(self.porcentaje)
         
 class Producto(models.Model):
     nombre = models.CharField(max_length=20)
@@ -20,7 +20,7 @@ class Producto(models.Model):
     precio = models.ForeignKey(PrecioH, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.nombre
+        return str(self.nombre)
     
 class Provedor(models.Model):
     nombre = models.CharField(max_length=20)
@@ -28,7 +28,7 @@ class Provedor(models.Model):
     direccion = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.nombre
+        return str(self.nombre)
     
 class Compra(models.Model):
     status = models.CharField(max_length=20)
@@ -37,7 +37,7 @@ class Compra(models.Model):
     iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.pk
+        return str(self.pk)
     
 class CompraProducto(models.Model):
     cantidad = models.IntegerField()
@@ -45,7 +45,7 @@ class CompraProducto(models.Model):
     compra = models.OneToOneField(Compra, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.cantidad
+        return str(self.cantidad)
     
 class Cliente(models.Model):
     nombre = models.CharField(max_length=20)
@@ -53,7 +53,7 @@ class Cliente(models.Model):
     direccion = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.nombre
+        return str(self.nombre)
     
 class Venta(models.Model):
     status = models.CharField(max_length=20)
@@ -62,7 +62,7 @@ class Venta(models.Model):
     iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.pk
+        return str(self.pk)
     
 class VentaProducto(models.Model):
     cantidad = models.IntegerField()
@@ -70,7 +70,7 @@ class VentaProducto(models.Model):
     venta = models.OneToOneField(Venta, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.cantidad
+        return str(self.cantidad)
 
 class Devolucion(models.Model):
     fecha = models.DateField()
@@ -78,14 +78,14 @@ class Devolucion(models.Model):
     venta = models.OneToOneField(VentaProducto, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.status
+        return str(self.status)
     
 class Inventario(models.Model):
     cantidad = models.IntegerField()
     producto = models.OneToOneField(Producto, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.cantidad
+        return str(self.cantidad)
 
 class FotoProducto(models.Model):
     foto = models.ImageField()
