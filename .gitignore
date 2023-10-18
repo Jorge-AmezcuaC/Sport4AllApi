@@ -1,0 +1,4 @@
+/env
+/api/api/__pycache__
+/api/sport4all/__pycache__
+/api/sport4all/migrations/__pycache__

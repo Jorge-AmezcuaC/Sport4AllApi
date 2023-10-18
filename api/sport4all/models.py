@@ -31,7 +31,7 @@ class Provedor(models.Model):
         return self.nombre
     
 class Compra(models.Model):
-    status = models.BooleanField(default=False)
+    status = models.CharField(max_length=20)
     fecha = models.DateField()
     proveedor = models.ForeignKey(Provedor, on_delete=models.CASCADE)
     iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
@@ -41,8 +41,8 @@ class Compra(models.Model):
     
 class CompraProducto(models.Model):
     cantidad = models.IntegerField()
-    producto = models.OneToOneField(Producto)
-    compra = models.OneToOneField(Compra)
+    producto = models.OneToOneField(Producto, on_delete=models.CASCADE)
+    compra = models.OneToOneField(Compra, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.cantidad
@@ -56,7 +56,7 @@ class Cliente(models.Model):
         return self.nombre
     
 class Venta(models.Model):
-    status = models.BooleanField(default=False)
+    status = models.CharField(max_length=20)
     fecha = models.DateField()
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
@@ -66,23 +66,27 @@ class Venta(models.Model):
     
 class VentaProducto(models.Model):
     cantidad = models.IntegerField()
-    producto = models.OneToOneField(Producto)
-    venta = models.OneToOneField(Venta)
+    producto = models.OneToOneField(Producto, on_delete=models.CASCADE)
+    venta = models.OneToOneField(Venta, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.cantidad
 
 class Devolucion(models.Model):
     fecha = models.DateField()
-    status = models.BooleanField(default=False)
-    venta = models.OneToOneField(VentaProducto)
+    status = models.CharField(max_length=20)
+    venta = models.OneToOneField(VentaProducto, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.status
     
 class Inventario(models.Model):
     cantidad = models.IntegerField()
-    producto = models.OneToOneField(Producto)
+    producto = models.OneToOneField(Producto, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.cantidad
+
+class FotoProducto(models.Model):
+    foto = models.ImageField()
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
