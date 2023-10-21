@@ -1,12 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from . import models, serializers
-
-
-class PrecioView(viewsets.ModelViewSet):
-	queryset = models.PrecioH.objects.all()
-	serializer_class = serializers.PrecioSerializer
-
 	
 class IvaView(viewsets.ModelViewSet):
 	queryset = models.Iva.objects.all()
@@ -27,11 +21,7 @@ class CompraView(viewsets.ModelViewSet):
 class CompraProductoView(viewsets.ModelViewSet):
 	queryset = models.CompraProducto.objects.all()
 	serializer_class = serializers.CompraProductoSerializer
-	
-class ClienteView(viewsets.ModelViewSet):
-	queryset = models.Cliente.objects.all()
-	serializer_class = serializers.ClienteSerializer
-	
+		
 class VentaView(viewsets.ModelViewSet):
 	queryset = models.Venta.objects.all()
 	serializer_class = serializers.VentaSerializer
@@ -44,10 +34,38 @@ class DevolucionView(viewsets.ModelViewSet):
 	queryset = models.Devolucion.objects.all()
 	serializer_class = serializers.DevolucionSerializer
 	
-class InventarioView(viewsets.ModelViewSet):
-	queryset = models.Inventario.objects.all()
-	serializer_class = serializers.InventarioSerializer
-	
 class FotoProductoView(viewsets.ModelViewSet):
 	queryset = models.FotoProducto.objects.all()
 	serializer_class = serializers.FotoProductoSerializer
+
+class PrecioHistoricoView(viewsets.ModelViewSet):
+	queryset = models.PrecioHistorico.objects.all()
+	serializer_class = serializers.PrecioHistoricoSerializer
+
+class DireccionView(viewsets.ModelViewSet):
+	queryset = models.Direccion.objects.all()
+	serializer_class = serializers.DireccionSerializer
+
+class UserView(viewsets.ModelViewSet):
+	queryset = models.User.objects.all()
+	serializer_class = serializers.UserSerializer
+
+class MarcaView(viewsets.ModelViewSet):
+	queryset = models.Marca.objects.all()
+	serializer_class = serializers.MarcaSerializer
+
+class TallaView(viewsets.ModelViewSet):
+	queryset = models.Talla.objects.all()
+	serializer_class = serializers.TallaSerializer
+
+class TallaProductoView(viewsets.ModelViewSet):
+	queryset = models.TallaProducto.objects.all()
+	serializer_class = serializers.TallaProductoSerializer
+
+class ProductoCarritoView(viewsets.ModelViewSet):
+	queryset = models.ProductoCarrito.objects.all()
+	serializer_class = serializers.ProductoCarritoSerializer
+
+class PruebasDevolucionView(viewsets.ModelViewSet):
+	queryset = models.PruebasDevolucion.objects.all()
+	serializer_class = serializers.PruebasDevolucionSerializer

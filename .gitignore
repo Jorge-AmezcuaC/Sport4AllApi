@@ -1,4 +1,20 @@
 /env
-/api/api/__pycache__
-/api/sport4all/__pycache__
-/api/sport4all/migrations/__pycache__
+/api/api/__pycache__/
+/api/sport4all/__pycache__/
+/api/sport4all/migrations/__pycache__/
+# Archivos generados por el entorno de desarrollo
+__pycache__/
+*.pyc
+*.pyo
+# Directorio de archivos estáticos generados
+staticfiles/
+# Directorio de archivos de medios generados
+media/
+#db
+db.sqlite3
+*.sqlite3
+*.db
+
+.$db.drawio.bkp
+db.drawio
+db.pdf
