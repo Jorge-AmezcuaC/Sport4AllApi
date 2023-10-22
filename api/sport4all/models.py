@@ -1,34 +1,63 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import BaseUserManager, PermissionsMixin, AbstractBaseUser
 from django.utils import timezone
+# from .customPermissions import *
 
-class Direccion(models.Model):
-    cp = models.CharField(max_length=5)
-    calle = models.CharField(max_length=20)
-    numeroExterno = models.CharField(max_length=5)
-    numeroInterno = models.CharField(max_length=20)
+class UserManager(BaseUserManager):
 
-    def __str__(self):
-        return f"{self.cp} {self.calle}"
+    def create_user(self, username, email, password, role):
+        email = self.normalize_email(email)
+        user = self.model(username=username,email=email,role=role)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, password, role):
+        user = self.create_user(username, email, password, role='administrador')
+        user.is_superuser = True
+        user.is_staff = True
+        user.save(using=self._db)
+        return user
     
-class User(AbstractUser):
+class User(AbstractBaseUser, PermissionsMixin):
     ROLES = (
         ('cliente', 'Cliente'),
         ('almacenista', 'Almacenista'),
         ('repartidor', 'Repartidor'),
         ('administrador', 'Administrador'),
     )
-    
+    username = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(max_length=255, unique=True)
     role = models.CharField(max_length=15, choices=ROLES, default='cliente')
-    nombre = models.CharField(max_length=50)
-    correo = models.EmailField(unique=True)
-    direccion = models.ForeignKey(Direccion, on_delete=models.CASCADE, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = [
+        'email',
+        'role',
+    ]
+
     
     def __str__(self):
         return f"{self.username}"
+    
+class Direccion(models.Model):
+    cp = models.CharField(max_length=5)
+    calle = models.CharField(max_length=20)
+    numeroExterno = models.CharField(max_length=5)
+    numeroInterno = models.CharField(max_length=20)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.cp} {self.calle}"
 
 class Marca(models.Model):
     nombre = models.CharField(max_length=20)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre}"
@@ -36,6 +65,7 @@ class Marca(models.Model):
 class Color(models.Model):
     nombre = models.CharField(max_length=20)
     codigoHex = models.CharField(max_length=7)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre}"
@@ -44,6 +74,7 @@ class Producto(models.Model):
     nombre = models.CharField(max_length=20)
     descripcion = models.CharField(max_length=255)
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre} {self.marca}"
@@ -57,6 +88,7 @@ class Talla(models.Model):
         ('XS', 'XS')
     ]
     talla = models.CharField(max_length=2, choices=tallas)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.talla}"
@@ -68,6 +100,7 @@ class TallaProducto(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     talla = models.ForeignKey(Talla, on_delete=models.CASCADE)
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.producto, self.talla} min:{self.minStock} max:{self.maxStock} stock:{self.cantidadInventario}"
@@ -76,13 +109,15 @@ class PrecioHistorico(models.Model):
     precio = models.FloatField()
     fecha = models.DateField(default=timezone.now)
     producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.precio}$ {self.producto.producto.nombre} {self.producto.talla} {self.producto.color}"
 
 class FotoProducto(models.Model):
-    foto = models.ImageField()
+    foto = models.ImageField(upload_to='producto')
     producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.producto}"
@@ -90,6 +125,7 @@ class FotoProducto(models.Model):
 class Iva(models.Model):
     porcentaje = models.FloatField()
     fecha = models.DateField(default=timezone.now)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.porcentaje}"
@@ -97,7 +133,7 @@ class Iva(models.Model):
 class Provedor(models.Model):
     nombre = models.CharField(max_length=25)
     correo = models.EmailField(unique=True)
-    direccion = models.ForeignKey(Direccion, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre}"
@@ -107,6 +143,7 @@ class ProductoCarrito(models.Model):
     cantidad = models.IntegerField()
     cliente = models.ForeignKey(User, on_delete=models.CASCADE)
     producto = models.ForeignKey(PrecioHistorico, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.cantidad} {self.producto}"
@@ -125,6 +162,7 @@ class Venta(models.Model):
     repartidor = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='pedidos_repartidos')
     subtotal = models.FloatField(null=True)
     total = models.FloatField(null=True)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.pk} {self.fecha} {self.status} {self.cliente}"
@@ -134,6 +172,7 @@ class VentaProducto(models.Model):
     producto = models.ForeignKey(PrecioHistorico, on_delete=models.CASCADE)
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
     subtotal = models.FloatField(null=True)
+    active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         self.subtotal = self.cantidad * self.producto.precio
@@ -154,6 +193,7 @@ class Devolucion(models.Model):
     status = models.CharField(max_length=20, choices=statusChoices, default='pendiente')
     descripcion = models.CharField(max_length=250)
     venta = models.ForeignKey(VentaProducto, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.status} {self.venta}"
@@ -161,6 +201,7 @@ class Devolucion(models.Model):
 class PruebasDevolucion(models.Model):
     foto = models.ImageField()
     devolucion = models.ForeignKey(Devolucion, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.pk} {self.devolucion}"
@@ -178,6 +219,7 @@ class Compra(models.Model):
     iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
     subtotal = models.FloatField(null=True)
     total = models.FloatField(null=True)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.pk} {self.status} {self.fecha}"
@@ -187,6 +229,7 @@ class CompraProducto(models.Model):
     producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
     compra = models.ForeignKey(Compra, on_delete=models.CASCADE)
     subtotal = models.FloatField()
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.cantidad} {self.producto}"

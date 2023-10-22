@@ -1,7 +1,8 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import VentaProducto, CompraProducto, Compra, Venta
+from .models import VentaProducto, CompraProducto, Compra, Venta, User
 from django.db.models import Sum
+from django.contrib.auth.models import Group
 
 @receiver(post_save, sender=VentaProducto)
 def update_venta_subtotal_total(sender, instance, created, **kwargs):
@@ -42,3 +43,22 @@ def update_stock_on_sale_status_change(sender, instance, **kwargs):
                 talla_producto = venta_producto.producto.producto
                 talla_producto.cantidadInventario -= venta_producto.cantidad
                 talla_producto.save()
+
+@receiver(post_save, sender=User)
+def assign_user_to_group(sender, instance, created, **kwargs):
+    if created:
+        # Definir la lógica para asignar usuarios a grupos según el valor de 'role'
+        if instance.role == 'administrador':
+            group_name = 'Administradores'
+        elif instance.role == 'almacenista':
+            group_name = 'Almacenistas'
+        elif instance.role == 'repartidor':
+            group_name = 'Repartidores'
+        else:
+            group_name = 'Clientes'  # El valor predeterminado para usuarios con otros roles
+
+        try:
+            group = Group.objects.get(name=group_name)
+            instance.groups.add(group)
+        except Group.DoesNotExist:
+            pass

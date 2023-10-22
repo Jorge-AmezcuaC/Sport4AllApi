@@ -1,6 +1,8 @@
 /env
 /api/api/__pycache__/
 /api/sport4all/__pycache__/
+api\api\__pycache__
+api\sport4all\migrations\__pycache__
 /api/sport4all/migrations/__pycache__/
 # Archivos generados por el entorno de desarrollo
 __pycache__/

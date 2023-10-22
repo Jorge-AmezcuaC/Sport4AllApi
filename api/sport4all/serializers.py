@@ -45,7 +45,7 @@ class DevolucionSerializer(serializers.ModelSerializer):
 class FotoProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.FotoProducto
-        fields = '__all__'
+        fields = ['id', 'foto']
         
 class PrecioHistoricoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,9 +58,34 @@ class DireccionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = models.User
-        fields = '__all__'
+        fields = [
+            'id',
+            'username',
+            'username',
+            'role',
+            'email',
+            'is_staff',
+            'password',
+        ]
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+                'style': {'input_type': 'password'}
+            }
+        }
+
+        def create(self, validated_data):
+            user = models.User.objects.create_user(
+                email=validated_data['email'],
+                password=validated_data['password'],
+                role=validated_data['role']
+            )
+
+            return user
+
 
 class MarcaSerializer(serializers.ModelSerializer):
     class Meta:
