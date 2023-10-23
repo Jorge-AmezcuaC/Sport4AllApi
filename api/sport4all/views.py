@@ -67,6 +67,8 @@ class TallaProductoView(viewsets.ModelViewSet):
 class ProductoCarritoView(viewsets.ModelViewSet):
 	queryset = models.ProductoCarrito.objects.all()
 	serializer_class = serializers.ProductoCarritoSerializer
+	filter_backends = [filters.SearchFilter]
+	search_fields = ['cliente__id']
 
 class PruebasDevolucionView(viewsets.ModelViewSet):
 	queryset = models.PruebasDevolucion.objects.all()

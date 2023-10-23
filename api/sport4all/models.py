@@ -116,7 +116,7 @@ class PrecioHistorico(models.Model):
 
 class FotoProducto(models.Model):
     foto = models.ImageField(upload_to='producto')
-    producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
+    producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE, related_name='fotos')
     active = models.BooleanField(default=True)
 
     def __str__(self):

@@ -45,12 +45,10 @@ class DevolucionSerializer(serializers.ModelSerializer):
 class FotoProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.FotoProducto
-        fields = ['id', 'foto']
-        
-class PrecioHistoricoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.PrecioHistorico
-        fields = '__all__'
+        fields = [
+            'id',
+            'foto',
+        ]
 
 class DireccionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -98,16 +96,27 @@ class TallaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TallaProductoSerializer(serializers.ModelSerializer):
+    fotos = FotoProductoSerializer(many=True, read_only=True)
     class Meta:
         model = models.TallaProducto
         fields = '__all__'
+        depth = 3
 
 class ProductoCarritoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ProductoCarrito
         fields = '__all__'
+        depth = 4
 
 class PruebasDevolucionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PruebasDevolucion
         fields = '__all__'
+
+class PrecioHistoricoSerializer(serializers.ModelSerializer):
+    fotos = FotoProductoSerializer(many=True, read_only=True)
+    producto = TallaProductoSerializer()
+    class Meta:
+        model = models.PrecioHistorico
+        fields = '__all__'
+        depth = 3
