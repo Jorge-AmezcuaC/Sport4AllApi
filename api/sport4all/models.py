@@ -70,15 +70,6 @@ class Color(models.Model):
     def __str__(self):
         return f"{self.nombre}"
 
-class Producto(models.Model):
-    nombre = models.CharField(max_length=20)
-    descripcion = models.CharField(max_length=255)
-    marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"{self.nombre} {self.marca}"
-
 class Talla(models.Model):
     tallas = [
         ('XL', 'XL'),
@@ -92,31 +83,32 @@ class Talla(models.Model):
 
     def __str__(self):
         return f"{self.talla}"
+    
+class Producto(models.Model):
+    nombre = models.CharField(max_length=20)
+    descripcion = models.CharField(max_length=255)
+    marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
+    precio = models.FloatField()
+    color = models.ForeignKey(Color, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.nombre} {self.color} {self.marca} ${self.precio}"
 
 class TallaProducto(models.Model):
     cantidadInventario = models.IntegerField(default=0)
     minStock = models.IntegerField()
     maxStock = models.IntegerField()
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='tallas')
     talla = models.ForeignKey(Talla, on_delete=models.CASCADE)
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.producto, self.talla} min:{self.minStock} max:{self.maxStock} stock:{self.cantidadInventario}"
-    
-class PrecioHistorico(models.Model):
-    precio = models.FloatField()
-    fecha = models.DateField(default=timezone.now)
-    producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"{self.precio}$ {self.producto.producto.nombre} {self.producto.talla} {self.producto.color}"
+        return f"{self.producto, self.talla}"
 
 class FotoProducto(models.Model):
     foto = models.ImageField(upload_to='producto')
-    producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE, related_name='fotos')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='fotos')
     active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -142,7 +134,7 @@ class Provedor(models.Model):
 class ProductoCarrito(models.Model):
     cantidad = models.IntegerField()
     cliente = models.ForeignKey(User, on_delete=models.CASCADE)
-    producto = models.ForeignKey(PrecioHistorico, on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -169,7 +161,7 @@ class Venta(models.Model):
     
 class VentaProducto(models.Model):
     cantidad = models.IntegerField()
-    producto = models.ForeignKey(PrecioHistorico, on_delete=models.CASCADE)
+    producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
     subtotal = models.FloatField(null=True)
     active = models.BooleanField(default=True)

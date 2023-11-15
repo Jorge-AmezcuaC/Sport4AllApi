@@ -5,11 +5,25 @@ class IvaSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Iva
         fields = '__all__'
+
+class TallaProductoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.TallaProducto
+        fields = '__all__'
         
 class ProductoSerializer(serializers.ModelSerializer):
+    tallas = TallaProductoSerializer(read_only = True, many = True)
     class Meta:
         model = models.Producto
-        fields = '__all__'
+        fields = [
+            'nombre',
+            'descripcion',
+            'marca',
+            'active',
+            'precio',
+            'color',
+            'tallas',
+        ]
         
 class ProvedorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -56,7 +70,6 @@ class DireccionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.User
         fields = [
@@ -95,13 +108,6 @@ class TallaSerializer(serializers.ModelSerializer):
         model = models.Talla
         fields = '__all__'
 
-class TallaProductoSerializer(serializers.ModelSerializer):
-    fotos = FotoProductoSerializer(many=True, read_only=True)
-    class Meta:
-        model = models.TallaProducto
-        fields = '__all__'
-        depth = 3
-
 class ProductoCarritoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ProductoCarrito
@@ -112,11 +118,3 @@ class PruebasDevolucionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PruebasDevolucion
         fields = '__all__'
-
-class PrecioHistoricoSerializer(serializers.ModelSerializer):
-    fotos = FotoProductoSerializer(many=True, read_only=True)
-    producto = TallaProductoSerializer()
-    class Meta:
-        model = models.PrecioHistorico
-        fields = '__all__'
-        depth = 3

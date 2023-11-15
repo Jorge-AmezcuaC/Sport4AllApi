@@ -15,7 +15,6 @@ from .forms import (
     CompraAdmin,
     CompraProductoAdmin,
     VentaAdmin,
-    PrecioHistoricoAdmin
     )
 
 admin.site.site_header = 'Sport4All Administration'
@@ -41,6 +40,5 @@ admin.site.register(models.Compra, CompraAdmin)
 admin.site.register(models.CompraProducto, CompraProductoAdmin)
 admin.site.register(models.Venta, VentaAdmin)
 admin.site.register(TallaProducto, TallaProductoAdmin)
-admin.site.register(models.PrecioHistorico, PrecioHistoricoAdmin)
 
 

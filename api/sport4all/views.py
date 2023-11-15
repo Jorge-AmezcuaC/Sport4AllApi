@@ -44,10 +44,6 @@ class FotoProductoView(viewsets.ModelViewSet):
 	queryset = models.FotoProducto.objects.all()
 	serializer_class = serializers.FotoProductoSerializer
 
-class PrecioHistoricoView(viewsets.ModelViewSet):
-	queryset = models.PrecioHistorico.objects.all()
-	serializer_class = serializers.PrecioHistoricoSerializer
-
 class DireccionView(viewsets.ModelViewSet):
 	queryset = models.Direccion.objects.all()
 	serializer_class = serializers.DireccionSerializer

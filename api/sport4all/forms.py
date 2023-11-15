@@ -18,15 +18,14 @@ class StockMinFilter(admin.SimpleListFilter):
 
 class TallaProductoAdmin(admin.ModelAdmin):
     list_filter = (StockMinFilter, 'talla',)
-    list_display = ('producto', 'talla', 'cantidadInventario', 'minStock', 'maxStock')
-    search_fields = ('producto__nombre', 'producto__marca__nombre')
+    list_display = ('producto', 'talla','cantidadInventario', 'minStock', 'maxStock',)
 
 class ProvedorAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'correo')
     search_fields = ('nombre',)
 
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'marca')
+    list_display = ('nombre', 'marca', 'precio', 'color')
     search_fields = ('nombre',)
 
 class MarcaAdmin(admin.ModelAdmin):
@@ -39,7 +38,7 @@ class DireccionAdmin(admin.ModelAdmin):
 
 class FotoProductoAdmin(admin.ModelAdmin):
     list_display = ('id', 'producto')
-    search_fields = ('producto__producto__nombre',)
+    search_fields = ('producto__nombre',)
 
 class PruebasDevolucionAdmin(admin.ModelAdmin):
     list_display = ('id', 'devolucion')
@@ -69,7 +68,3 @@ class VentaAdmin(admin.ModelAdmin):
     list_display = ('id', 'fecha', 'status', 'cliente', 'repartidor', 'total')
     list_filter = ('status',)
     search_fields = ('id', 'fecha', 'cliente__username', 'repartidor__username')
-
-class PrecioHistoricoAdmin(admin.ModelAdmin):
-    list_display = ('producto', 'precio', 'fecha')
-    search_fields = ('fecha', 'producto__producto__nombre')
