@@ -6,16 +6,28 @@ class IvaSerializer(serializers.ModelSerializer):
         model = models.Iva
         fields = '__all__'
 
+class MarcaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Marca
+        fields = '__all__'
+
+class TallaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Talla
+        fields = '__all__'
+
 class TallaProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.TallaProducto
         fields = '__all__'
+        depth = 1
         
 class ProductoSerializer(serializers.ModelSerializer):
     tallas = TallaProductoSerializer(read_only = True, many = True)
     class Meta:
         model = models.Producto
         fields = [
+            'id',
             'nombre',
             'descripcion',
             'marca',
@@ -24,7 +36,8 @@ class ProductoSerializer(serializers.ModelSerializer):
             'color',
             'tallas',
         ]
-        
+        depth = 2
+
 class ProvedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Provedor
@@ -96,17 +109,6 @@ class UserSerializer(serializers.ModelSerializer):
             )
 
             return user
-
-
-class MarcaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Marca
-        fields = '__all__'
-
-class TallaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Talla
-        fields = '__all__'
 
 class ProductoCarritoSerializer(serializers.ModelSerializer):
     class Meta:
