@@ -8,13 +8,11 @@ from .forms import (
     ProductoAdmin, 
     MarcaAdmin, 
     DireccionAdmin,
-    FotoProductoAdmin,
     UserAdmin,
     DevolucionAdmin,
-    PruebasDevolucionAdmin,
     CompraAdmin,
-    CompraProductoAdmin,
     VentaAdmin,
+    
     )
 
 admin.site.site_header = 'Sport4All Administration'
@@ -26,18 +24,16 @@ admin.site.register(models.Iva)
 admin.site.register(models.Color)
 
 #genericos
+
 admin.site.register(models.Provedor ,ProvedorAdmin)
 admin.site.register(models.Producto ,ProductoAdmin)
 admin.site.register(models.Marca ,MarcaAdmin)
 admin.site.register(models.Direccion ,DireccionAdmin)
-admin.site.register(models.FotoProducto, FotoProductoAdmin)
-admin.site.register(models.PruebasDevolucion, PruebasDevolucionAdmin)
 
 #Con Filtros
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.Devolucion, DevolucionAdmin)
 admin.site.register(models.Compra, CompraAdmin)
-admin.site.register(models.CompraProducto, CompraProductoAdmin)
 admin.site.register(models.Venta, VentaAdmin)
 admin.site.register(TallaProducto, TallaProductoAdmin)
 

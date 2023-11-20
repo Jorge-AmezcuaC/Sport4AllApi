@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, PermissionsMixin, AbstractBaseUser
 from django.utils import timezone
-# from .customPermissions import *
+from django.db.models import F
 
 class UserManager(BaseUserManager):
 
@@ -56,15 +56,15 @@ class Direccion(models.Model):
         return f"{self.cp} {self.calle}"
 
 class Marca(models.Model):
-    nombre = models.CharField(max_length=20)
+    nombre = models.CharField(max_length=20, unique=True)
     active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre}"
     
 class Color(models.Model):
-    nombre = models.CharField(max_length=20)
-    codigoHex = models.CharField(max_length=7)
+    nombre = models.CharField(max_length=20, unique=True)
+    codigoHex = models.CharField(max_length=7, unique=True)
     active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -78,7 +78,7 @@ class Talla(models.Model):
         ('S', 'S'),
         ('XS', 'XS')
     ]
-    talla = models.CharField(max_length=2, choices=tallas)
+    talla = models.CharField(max_length=2, choices=tallas, unique=True)
     active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -90,10 +90,22 @@ class Producto(models.Model):
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
     precio = models.FloatField()
+
+    def __str__(self):
+        return f"{self.nombre} {self.marca} ${self.precio}"
+    
+    class Meta:
+        unique_together = ('nombre', 'marca', 'descripcion', 'precio')
+    
+class ColorProducto(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='color')
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.nombre} {self.color} {self.marca} ${self.precio}"
+        return f"{self.color} {self.producto}"
+    
+    class Meta:
+        unique_together = ('producto', 'color')
 
 class TallaProducto(models.Model):
     cantidadInventario = models.IntegerField(default=0)
@@ -104,7 +116,11 @@ class TallaProducto(models.Model):
     active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.producto, self.talla}"
+        return f"{self.producto.nombre} {self.producto.marca} {self.talla}"
+    
+    class Meta:
+        verbose_name = 'Inventario'
+        unique_together = ('producto', 'talla')
 
 class FotoProducto(models.Model):
     foto = models.ImageField(upload_to='producto')
@@ -113,6 +129,9 @@ class FotoProducto(models.Model):
 
     def __str__(self):
         return f"{self.producto}"
+    
+    class Meta:
+        unique_together = ('foto', 'producto')
     
 class Iva(models.Model):
     porcentaje = models.FloatField()
@@ -134,11 +153,26 @@ class Provedor(models.Model):
 class ProductoCarrito(models.Model):
     cantidad = models.IntegerField()
     cliente = models.ForeignKey(User, on_delete=models.CASCADE)
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
+    color = models.ForeignKey(Color, on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.cantidad} {self.producto}"
+    
+    def save(self, *args, **kwargs):
+        existing_carrito = ProductoCarrito.objects.filter(
+            cliente=self.cliente,
+            producto=self.producto,
+            color=self.color,
+            active=True
+        ).first()
+
+        if existing_carrito:
+            existing_carrito.cantidad = F('cantidad') + self.cantidad
+            existing_carrito.save()
+        else:
+            super().save(*args, **kwargs)
     
 class Venta(models.Model):
     statusChoices = (
@@ -152,8 +186,8 @@ class Venta(models.Model):
     cliente = models.ForeignKey(User, on_delete=models.CASCADE, related_name='compras_totales')
     iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
     repartidor = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='pedidos_repartidos')
-    subtotal = models.FloatField(null=True)
-    total = models.FloatField(null=True)
+    subtotal = models.FloatField(null=True, default=0)
+    total = models.FloatField(null=True, default=0)
     active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -162,17 +196,21 @@ class Venta(models.Model):
 class VentaProducto(models.Model):
     cantidad = models.IntegerField()
     producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
-    venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
+    color = models.ForeignKey(Color, on_delete=models.CASCADE)
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='detalles')
     subtotal = models.FloatField(null=True)
     active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
-        self.subtotal = self.cantidad * self.producto.precio
+        self.subtotal = self.cantidad * self.producto.producto.precio
         
         super(VentaProducto, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.cantidad} {self.producto}"
+    
+    class Meta: 
+        unique_together = ('producto', 'color', 'venta')
 
 class Devolucion(models.Model):
     statusChoices = (
@@ -209,15 +247,16 @@ class Compra(models.Model):
     fecha = models.DateField(default=timezone.now)
     proveedor = models.ForeignKey(Provedor, on_delete=models.CASCADE)
     iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
-    subtotal = models.FloatField(null=True)
-    total = models.FloatField(null=True)
+    subtotal = models.FloatField(null=True, default=0)
+    total = models.FloatField(null=True, default=0)
     active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.pk} {self.status} {self.fecha}"
+        return f"Folio: {self.pk} Estado: {self.status} El {self.fecha}"
     
 class CompraProducto(models.Model):
     cantidad = models.IntegerField()
+    color = models.ForeignKey(Color, on_delete=models.CASCADE)
     producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
     compra = models.ForeignKey(Compra, on_delete=models.CASCADE)
     subtotal = models.FloatField()
@@ -225,3 +264,7 @@ class CompraProducto(models.Model):
 
     def __str__(self):
         return f"{self.cantidad} {self.producto}"
+    
+    class Meta:
+        unique_together = ('producto', 'color', 'compra')
+    

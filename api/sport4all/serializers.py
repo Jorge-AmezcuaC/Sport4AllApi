@@ -11,6 +11,12 @@ class MarcaSerializer(serializers.ModelSerializer):
         model = models.Marca
         fields = '__all__'
 
+class ProductoColorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ColorProducto
+        fields = '__all__'
+        depth = 1
+
 class TallaSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Talla
@@ -21,9 +27,19 @@ class TallaProductoSerializer(serializers.ModelSerializer):
         model = models.TallaProducto
         fields = '__all__'
         depth = 1
+
+class FotoProductoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.FotoProducto
+        fields = [
+            'id',
+            'foto',
+        ]
         
 class ProductoSerializer(serializers.ModelSerializer):
     tallas = TallaProductoSerializer(read_only = True, many = True)
+    color = ProductoColorSerializer(read_only = True, many = True)
+    fotos = FotoProductoSerializer(read_only = True, many = True)
     class Meta:
         model = models.Producto
         fields = [
@@ -35,6 +51,7 @@ class ProductoSerializer(serializers.ModelSerializer):
             'precio',
             'color',
             'tallas',
+            'fotos',
         ]
         depth = 2
 
@@ -54,28 +71,23 @@ class CompraSerializer(serializers.ModelSerializer):
         model = models.Compra
         fields = '__all__'
         
-class VentaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Venta
-        fields = '__all__'
-        
 class VentaProductoSerializer(serializers.ModelSerializer):
+    producto = TallaProductoSerializer()
     class Meta:
         model = models.VentaProducto
+        fields = '__all__'
+        depth = 1
+        
+class VentaSerializer(serializers.ModelSerializer):
+    detalles = VentaProductoSerializer(read_only = True, many = True, )
+    class Meta:
+        model = models.Venta
         fields = '__all__'
         
 class DevolucionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Devolucion
         fields = '__all__'
-        
-class FotoProductoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.FotoProducto
-        fields = [
-            'id',
-            'foto',
-        ]
 
 class DireccionSerializer(serializers.ModelSerializer):
     class Meta:
