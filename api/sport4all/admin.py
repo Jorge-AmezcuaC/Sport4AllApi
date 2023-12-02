@@ -19,7 +19,6 @@ admin.site.site_header = 'Sport4All Administration'
 admin.site.site_title = 'Sport4All'
 
 #No necesitan personalizado
-admin.site.register(models.Talla)
 admin.site.register(models.Iva)
 admin.site.register(models.Color)
 

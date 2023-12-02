@@ -4,22 +4,6 @@ from .models import VentaProducto, CompraProducto, Compra, Venta, User
 from django.db.models import Sum
 from django.contrib.auth.models import Group
 
-@receiver(post_save, sender=VentaProducto)
-def update_venta_subtotal_total(sender, instance, created, **kwargs):
-    if created:
-        # Actualizar subtotal y total de la venta
-        instance.venta.subtotal = instance.venta.ventaproducto_set.aggregate(Sum('subtotal'))['subtotal__sum'] or 0
-        instance.venta.total = instance.venta.subtotal * (1 + instance.venta.iva.porcentaje / 100)
-        instance.venta.save()
-
-@receiver(post_save, sender=CompraProducto)
-def update_compra_subtotal_total(sender, instance, created, **kwargs):
-    if created:
-        # Actualizar subtotal y total de la compra
-        instance.compra.subtotal = instance.compra.compraproducto_set.aggregate(Sum('subtotal'))['subtotal__sum'] or 0
-        instance.compra.total = instance.compra.subtotal * (1 + instance.compra.iva.porcentaje / 100)
-        instance.compra.save()
-
 @receiver(pre_save, sender=Compra)
 def update_stock_on_purchase_status_change(sender, instance, **kwargs):
     # Verificar si el estado de la compra está cambiando a "pagado"

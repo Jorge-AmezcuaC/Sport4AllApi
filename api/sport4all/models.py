@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import BaseUserManager, PermissionsMixin, AbstractBaseUser
 from django.utils import timezone
 from django.db.models import F
+from django.core.exceptions import ValidationError
+
 
 class UserManager(BaseUserManager):
 
@@ -50,14 +52,12 @@ class Direccion(models.Model):
     numeroExterno = models.CharField(max_length=5)
     numeroInterno = models.CharField(max_length=20)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.cp} {self.calle}"
 
 class Marca(models.Model):
     nombre = models.CharField(max_length=20, unique=True)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre}"
@@ -65,30 +65,14 @@ class Marca(models.Model):
 class Color(models.Model):
     nombre = models.CharField(max_length=20, unique=True)
     codigoHex = models.CharField(max_length=7, unique=True)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre}"
-
-class Talla(models.Model):
-    tallas = [
-        ('XL', 'XL'),
-        ('X', 'X'),
-        ('M', 'M'),
-        ('S', 'S'),
-        ('XS', 'XS')
-    ]
-    talla = models.CharField(max_length=2, choices=tallas, unique=True)
-    active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"{self.talla}"
     
 class Producto(models.Model):
     nombre = models.CharField(max_length=20)
     descripcion = models.CharField(max_length=255)
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
     precio = models.FloatField()
 
     def __str__(self):
@@ -96,36 +80,37 @@ class Producto(models.Model):
     
     class Meta:
         unique_together = ('nombre', 'marca', 'descripcion', 'precio')
-    
-class ColorProducto(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='color')
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.color} {self.producto}"
-    
-    class Meta:
-        unique_together = ('producto', 'color')
 
 class TallaProducto(models.Model):
+    tallas = [
+        ('XL', 'XL'),
+        ('X', 'X'),
+        ('M', 'M'),
+        ('S', 'S'),
+        ('XS', 'XS')
+    ]
+
     cantidadInventario = models.IntegerField(default=0)
     minStock = models.IntegerField()
     maxStock = models.IntegerField()
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='tallas')
-    talla = models.ForeignKey(Talla, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
+    talla = models.CharField(max_length=2, choices=tallas, unique=True)
+    color = models.ForeignKey(Color, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.producto.nombre} {self.producto.marca} {self.talla}"
     
+    def clean(self):
+        if self.maxStock < self.minStock:
+            raise ValidationError("El stock Maximo debe ser mayor al stock Minimo")
+    
     class Meta:
         verbose_name = 'Inventario'
-        unique_together = ('producto', 'talla')
+        unique_together = ('producto', 'talla', 'color')
 
 class FotoProducto(models.Model):
     foto = models.ImageField(upload_to='producto')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='fotos')
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.producto}"
@@ -136,7 +121,6 @@ class FotoProducto(models.Model):
 class Iva(models.Model):
     porcentaje = models.FloatField()
     fecha = models.DateField(default=timezone.now)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.porcentaje}"
@@ -144,7 +128,6 @@ class Iva(models.Model):
 class Provedor(models.Model):
     nombre = models.CharField(max_length=25)
     correo = models.EmailField(unique=True)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre}"
@@ -154,8 +137,6 @@ class ProductoCarrito(models.Model):
     cantidad = models.IntegerField()
     cliente = models.ForeignKey(User, on_delete=models.CASCADE)
     producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.cantidad} {self.producto}"
@@ -164,7 +145,6 @@ class ProductoCarrito(models.Model):
         existing_carrito = ProductoCarrito.objects.filter(
             cliente=self.cliente,
             producto=self.producto,
-            color=self.color,
             active=True
         ).first()
 
@@ -184,11 +164,7 @@ class Venta(models.Model):
     status = models.CharField(max_length=20, choices=statusChoices, default='procesando')
     fecha = models.DateField(default=timezone.now)
     cliente = models.ForeignKey(User, on_delete=models.CASCADE, related_name='compras_totales')
-    iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
     repartidor = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='pedidos_repartidos')
-    subtotal = models.FloatField(null=True, default=0)
-    total = models.FloatField(null=True, default=0)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.pk} {self.fecha} {self.status} {self.cliente}"
@@ -196,21 +172,14 @@ class Venta(models.Model):
 class VentaProducto(models.Model):
     cantidad = models.IntegerField()
     producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='detalles')
-    subtotal = models.FloatField(null=True)
-    active = models.BooleanField(default=True)
-
-    def save(self, *args, **kwargs):
-        self.subtotal = self.cantidad * self.producto.producto.precio
-        
-        super(VentaProducto, self).save(*args, **kwargs)
+    precioUnitario = models.FloatField(null=True)
 
     def __str__(self):
         return f"{self.cantidad} {self.producto}"
     
     class Meta: 
-        unique_together = ('producto', 'color', 'venta')
+        unique_together = ('producto', 'venta')
 
 class Devolucion(models.Model):
     statusChoices = (
@@ -223,7 +192,6 @@ class Devolucion(models.Model):
     status = models.CharField(max_length=20, choices=statusChoices, default='pendiente')
     descripcion = models.CharField(max_length=250)
     venta = models.ForeignKey(VentaProducto, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.status} {self.venta}"
@@ -231,7 +199,6 @@ class Devolucion(models.Model):
 class PruebasDevolucion(models.Model):
     foto = models.ImageField()
     devolucion = models.ForeignKey(Devolucion, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.pk} {self.devolucion}"
@@ -246,25 +213,19 @@ class Compra(models.Model):
     status = models.CharField(max_length=20, choices=statusChoices, default='en proceso')
     fecha = models.DateField(default=timezone.now)
     proveedor = models.ForeignKey(Provedor, on_delete=models.CASCADE)
-    iva = models.ForeignKey(Iva, on_delete=models.CASCADE)
-    subtotal = models.FloatField(null=True, default=0)
-    total = models.FloatField(null=True, default=0)
-    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"Folio: {self.pk} Estado: {self.status} El {self.fecha}"
     
 class CompraProducto(models.Model):
     cantidad = models.IntegerField()
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
     producto = models.ForeignKey(TallaProducto, on_delete=models.CASCADE)
     compra = models.ForeignKey(Compra, on_delete=models.CASCADE)
-    subtotal = models.FloatField()
-    active = models.BooleanField(default=True)
+    precioUnitario = models.FloatField()
 
     def __str__(self):
         return f"{self.cantidad} {self.producto}"
     
     class Meta:
-        unique_together = ('producto', 'color', 'compra')
+        unique_together = ('producto', 'compra')
     

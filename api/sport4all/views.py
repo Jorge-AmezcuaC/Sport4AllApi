@@ -52,10 +52,6 @@ class MarcaView(viewsets.ModelViewSet):
 	queryset = models.Marca.objects.all()
 	serializer_class = serializers.MarcaSerializer
 
-class TallaView(viewsets.ModelViewSet):
-	queryset = models.Talla.objects.all()
-	serializer_class = serializers.TallaSerializer
-
 class TallaProductoView(viewsets.ModelViewSet):
 	queryset = models.TallaProducto.objects.all()
 	serializer_class = serializers.TallaProductoSerializer

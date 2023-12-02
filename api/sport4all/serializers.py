@@ -11,17 +11,6 @@ class MarcaSerializer(serializers.ModelSerializer):
         model = models.Marca
         fields = '__all__'
 
-class ProductoColorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.ColorProducto
-        fields = '__all__'
-        depth = 1
-
-class TallaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Talla
-        fields = '__all__'
-
 class TallaProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.TallaProducto
@@ -38,7 +27,6 @@ class FotoProductoSerializer(serializers.ModelSerializer):
         
 class ProductoSerializer(serializers.ModelSerializer):
     tallas = TallaProductoSerializer(read_only = True, many = True)
-    color = ProductoColorSerializer(read_only = True, many = True)
     fotos = FotoProductoSerializer(read_only = True, many = True)
     class Meta:
         model = models.Producto
@@ -47,9 +35,7 @@ class ProductoSerializer(serializers.ModelSerializer):
             'nombre',
             'descripcion',
             'marca',
-            'active',
             'precio',
-            'color',
             'tallas',
             'fotos',
         ]

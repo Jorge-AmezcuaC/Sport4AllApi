@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TallaProducto, ColorProducto, FotoProducto, CompraProducto, VentaProducto
+from .models import TallaProducto, FotoProducto, CompraProducto, VentaProducto, Compra
 from django.db.models import F
 from django import forms
 
@@ -16,14 +16,11 @@ class StockMinFilter(admin.SimpleListFilter):
         if self.value() == 'below_min':
             return queryset.filter(cantidadInventario__lt=F('minStock'))
         return queryset
+    
 class TallaProductoInline(admin.TabularInline):
     model = TallaProducto
     extra = 1
     readonly_fields = ('cantidadInventario', )
-
-class ColorProductoInline(admin.TabularInline):  
-    model = ColorProducto
-    extra = 1
 
 class FotoProductoInline(admin.TabularInline):  
     model = FotoProducto
@@ -50,17 +47,13 @@ class ProvedorAdmin(admin.ModelAdmin):
     search_fields = ('nombre',)
 
 class ProductoAdmin(admin.ModelAdmin):
-    inlines = [TallaProductoInline, ColorProductoInline, FotoProductoInline]
+    inlines = [TallaProductoInline, FotoProductoInline]
     list_display = ('nombre', 'marca', 'precio')
     search_fields = ('nombre',)
     autocomplete_fields = ('marca',)
     fieldsets = (
         ('Producto', {
             'fields': ('nombre', 'descripcion', 'marca', 'precio')
-        }),
-        ('Activo logico', {
-            'fields': ('active',),
-            'classes': ('collapse',)  # Puedes hacer que esta sección sea colapsable
         }),
     )
 
@@ -84,17 +77,29 @@ class DevolucionAdmin(admin.ModelAdmin):
     list_filter = ('status',)
 
 class CompraAdmin(admin.ModelAdmin):
-    list_display = ('id', 'fecha', 'status', 'proveedor', 'subtotal', 'total')
+    readonly_fields = ('fecha', 'folio')
+    list_display = ('id', 'fecha', 'status', 'proveedor')
     list_filter = ('status',)
     search_fields = ('id', 'fecha', 'proveedor__nombre')
-    autocomplete_fields = ('proveedor', )
+    autocomplete_fields = ('proveedor',)
     inlines = [CompraProductoInLine]
-    readonly_fields = ('subtotal', 'total', 'fecha')
-    exclude = ('active',)
     date_hierarchy = ('fecha')
 
+    fieldsets = (
+        (None, {'fields': ('folio', 'fecha', 'status', 'proveedor',)}),
+    )
+
+    def folio(self, obj=None):
+        try:
+            last_id = Compra.objects.latest('id').id
+        except Compra.DoesNotExist:
+            last_id = 0
+        return last_id + 1
+
+    folio.short_description = 'Folio'
+
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'fecha', 'status', 'cliente', 'repartidor', 'total')
+    list_display = ('id', 'fecha', 'status', 'cliente', 'repartidor',)
     list_filter = ('status',)
     search_fields = ('id', 'fecha', 'cliente__username', 'repartidor__username')
     date_hierarchy = 'fecha'
