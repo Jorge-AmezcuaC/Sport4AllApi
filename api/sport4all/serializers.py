@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from . import models
+from .models import TallaProducto
 
 class IvaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,7 +16,7 @@ class TallaProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.TallaProducto
         fields = '__all__'
-        depth = 1
+        depth = 2
 
 class FotoProductoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,36 +40,37 @@ class ProductoSerializer(serializers.ModelSerializer):
             'tallas',
             'fotos',
         ]
-        depth = 2
+        depth = 1
 
-class ProvedorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Provedor
-        fields = '__all__'
-        
-class CompraProductoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CompraProducto
-        fields = '__all__'
-
-class CompraSerializer(serializers.ModelSerializer):
-    compra_producto = CompraProductoSerializer(source='compraproducto_set', many=True, read_only=True)
-    class Meta:
-        model = models.Compra
-        fields = '__all__'
-        
 class VentaProductoSerializer(serializers.ModelSerializer):
-    producto = TallaProductoSerializer()
+    producto = TallaProductoSerializer(read_only = True)
+    productoid = serializers.PrimaryKeyRelatedField(write_only = True, 
+    queryset = TallaProducto.objects.all(), source="producto")
     class Meta:
         model = models.VentaProducto
-        fields = '__all__'
-        depth = 1
+        fields = [
+            'cantidad',
+            'precioUnitario',
+            'venta',
+            'producto',
+            'productoid',
+        ]
         
 class VentaSerializer(serializers.ModelSerializer):
     detalles = VentaProductoSerializer(read_only = True, many = True, )
     class Meta:
         model = models.Venta
-        fields = '__all__'
+        fields = [
+            'id',
+            'status',
+            "fecha",
+            "cliente",
+            'repartidor',
+            'subtotal',
+            'total',
+            'iva_importe',
+            'detalles',
+        ]
         
 class DevolucionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -81,6 +83,7 @@ class DireccionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
+    direcciones = DireccionSerializer(read_only = True, many = True)
     class Meta:
         model = models.User
         fields = [
@@ -91,6 +94,7 @@ class UserSerializer(serializers.ModelSerializer):
             'email',
             'is_staff',
             'password',
+            'direcciones',
         ]
         extra_kwargs = {
             'password': {
@@ -109,12 +113,23 @@ class UserSerializer(serializers.ModelSerializer):
             return user
 
 class ProductoCarritoSerializer(serializers.ModelSerializer):
+    producto = TallaProductoSerializer(read_only = True)
+    productoId = serializers.PrimaryKeyRelatedField(write_only = True, queryset = TallaProducto.objects.all(), source="producto")
     class Meta:
         model = models.ProductoCarrito
-        fields = '__all__'
-        depth = 4
+        fields = [
+            'id',
+            'cantidad',
+            'cliente',
+            'producto',
+            'productoId',
+        ]
 
 class PruebasDevolucionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PruebasDevolucion
         fields = '__all__'
+
+class AuthSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only = True)

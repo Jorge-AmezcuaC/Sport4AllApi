@@ -7,9 +7,6 @@ from django.conf.urls.static import static
 router = routers.DefaultRouter()
 router.register(r'Iva', views.IvaView)
 router.register(r'Producto', views.ProductoView)
-router.register(r'Proveedor', views.ProvedorView)
-router.register(r'Compra', views.CompraView)
-router.register(r'CompraProducto', views.CompraProductoView)
 router.register(r'Venta', views.VentaView)
 router.register(r'VentaProducto', views.VentaProductoView)
 router.register(r'Devolucion', views.DevolucionView)
@@ -23,6 +20,8 @@ router.register(r'PruebasDevolucion', views.PruebasDevolucionView)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('register/', views.UserRegistrationView.as_view(), name='user-registration'),
+    path('login/', views.UserLoginView.as_view(), name='user-login'),
 ]
 
 if settings.DEBUG:

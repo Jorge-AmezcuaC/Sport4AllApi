@@ -14,8 +14,10 @@ staticfiles/
 media/
 #db
 /api/db.sqlite3
+/api/testBase
 *.sqlite3
 *.db
+
 
 .$db.drawio.bkp
 db.drawio

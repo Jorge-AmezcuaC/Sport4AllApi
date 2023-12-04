@@ -5,6 +5,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 	
 class IvaView(viewsets.ModelViewSet):
 	queryset = models.Iva.objects.all()
@@ -16,21 +17,11 @@ class ProductoView(viewsets.ModelViewSet):
 	filter_backends = [filters.SearchFilter]
 	search_fields = ['nombre']
 	
-class ProvedorView(viewsets.ModelViewSet):
-	queryset = models.Provedor.objects.all()
-	serializer_class = serializers.ProvedorSerializer
-	
-class CompraView(viewsets.ModelViewSet):
-	queryset = models.Compra.objects.all()
-	serializer_class = serializers.CompraSerializer
-	
-class CompraProductoView(viewsets.ModelViewSet):
-	queryset = models.CompraProducto.objects.all()
-	serializer_class = serializers.CompraProductoSerializer
-		
 class VentaView(viewsets.ModelViewSet):
 	queryset = models.Venta.objects.all()
 	serializer_class = serializers.VentaSerializer
+	filter_backends = [filters.SearchFilter]
+	search_fields = ['cliente__id']
 	
 class VentaProductoView(viewsets.ModelViewSet):
 	queryset = models.VentaProducto.objects.all()
@@ -69,8 +60,6 @@ class PruebasDevolucionView(viewsets.ModelViewSet):
 class UserView(viewsets.ModelViewSet):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
-    # authentication_classes = (TokenAuthentication,)
-    # permission_classes = (permission.UpdateUSer,)
 
     def perform_create(self, serializer):
         try:
@@ -89,3 +78,57 @@ class UserView(viewsets.ModelViewSet):
         except Exception as exc:
             return Response({'error':'Error desconocido'},status=status.HTTP_400_BAD_REQUEST)
 
+class UserRegistrationView(generics.CreateAPIView):
+    serializer_class = serializers.UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        user.set_password(user.password)
+        user.save()
+
+        token, created = Token.objects.get_or_create(user=user)
+        response_data = {
+            'token': token.key,
+            'user': serializers.UserSerializer(user).data,
+            'mensaje': 'Registro exitoso',
+        }
+
+        if created:
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+class UserLoginView(ObtainAuthToken):
+
+    def post(self, request, *args, **kwargs):
+        try:
+            login_serializer = self.serializer_class(
+                data=request.data,
+                context={'request': request}
+            )
+            if login_serializer.is_valid():
+                user = login_serializer.validated_data['user']
+                token, created = Token.objects.get_or_create(user=user)
+                user_serializer = serializers.AuthSerializer(user)
+                if created:
+                    return Response({
+                        'token': token.key,
+                        'user': serializers.UserSerializer(user).data,
+                        'mensaje': 'Inicio de sesion exitoso',
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    token = Token.objects.get(user=user)
+                    return Response({
+                        'token': token.key,
+                        'user': serializers.UserSerializer(user).data,
+                        'mensaje': 'Inicio de sesion exitoso',
+                    }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'mensaje': 'El usuario o la contraseña es '
+                                            'incorrecta'},
+                                status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            print(exc)
+            return Response({'error':'Error desconocido'},status=status.HTTP_400_BAD_REQUEST)

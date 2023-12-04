@@ -30,10 +30,29 @@ class CompraProductoInLine(admin.TabularInline):
     autocomplete_fields = ('producto',)
     model = CompraProducto
     extra = 1
+    readonly_fields = ('sub_Total',)
+
+    def sub_Total(self, instance):
+        if instance.precioUnitario and instance.cantidad:
+            return instance.precioUnitario * instance.cantidad
+        else:
+            return '-'
+
+    sub_Total.short_description = 'SubTotal'
 
 class VentaProductoInLine(admin.TabularInline):
+    autocomplete_fields = ('producto',)
     model = VentaProducto
     extra = 0
+    readonly_fields = ('cantidad', 'producto', 'precioUnitario' ,'sub_Total')
+
+    def sub_Total(self, instance):
+        if instance.precioUnitario and instance.cantidad:
+            return instance.precioUnitario * instance.cantidad
+        else:
+            return '-'
+
+    sub_Total.short_description = 'SubTotal'
 
 class TallaProductoAdmin(admin.ModelAdmin):
     list_filter = (StockMinFilter, 'talla',)
@@ -77,8 +96,8 @@ class DevolucionAdmin(admin.ModelAdmin):
     list_filter = ('status',)
 
 class CompraAdmin(admin.ModelAdmin):
-    readonly_fields = ('fecha', 'folio')
-    list_display = ('id', 'fecha', 'status', 'proveedor')
+    readonly_fields = ('fecha', 'folio', 'subtotal', 'ivaTotal', 'total')
+    list_display = ('id', 'fecha', 'status', 'proveedor', 'subtotal', 'ivaTotal', 'total')
     list_filter = ('status',)
     search_fields = ('id', 'fecha', 'proveedor__nombre')
     autocomplete_fields = ('proveedor',)
@@ -87,22 +106,49 @@ class CompraAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {'fields': ('folio', 'fecha', 'status', 'proveedor',)}),
+        ('Resumen de la Compra', {'fields': ('subtotal', 'ivaTotal', 'total')}),
     )
 
     def folio(self, obj=None):
-        try:
-            last_id = Compra.objects.latest('id').id
-        except Compra.DoesNotExist:
-            last_id = 0
-        return last_id + 1
+        if obj and obj.id:
+            return obj.id
+        else:
+            try:
+                last_id = Compra.objects.latest('id').id
+            except Compra.DoesNotExist:
+                last_id = 0
+            return last_id + 1
+        
+    def ivaTotal(self, obj=None):
+        if obj and obj.id:
+            return str(obj.iva_importe) + '$'
+        else:
+            return str(obj.iva_porcentaje) + '%'
+        
+    
 
     folio.short_description = 'Folio'
+    ivaTotal.short_description = 'Importe'
 
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'fecha', 'status', 'cliente', 'repartidor',)
+    list_display = ('id', 'fecha', 'status', 'cliente', 'repartidor', 'subtotal', 'ivaTotal', 'total')
     list_filter = ('status',)
     search_fields = ('id', 'fecha', 'cliente__username', 'repartidor__username')
     date_hierarchy = 'fecha'
-    readonly_fields = ('cliente',)
+    readonly_fields = ('fecha', 'id', 'subtotal', 'ivaTotal', 'total', 'direccion_cliente', 'cliente', )
     autocomplete_fields = ('repartidor',)
     inlines = [VentaProductoInLine]
+
+    fieldsets = (
+        (None, {'fields': ('id', 'fecha', 'status', 'cliente', 'repartidor')}),
+        ('Resumen de la Compra', {'fields': ('subtotal', 'ivaTotal', 'total')}),
+        ('Direccion de Envio', {'fields': ('direccion_cliente',)}),
+    )
+
+    def ivaTotal(self, obj=None):
+        if obj and obj.id:
+            return str(obj.iva_importe) + '$'
+        else:
+            return str(obj.iva_porcentaje) + '%'
+        
+    ivaTotal.short_description = 'Importe'

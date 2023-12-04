@@ -23,7 +23,7 @@ def update_stock_on_sale_status_change(sender, instance, **kwargs):
         old_sale = Venta.objects.get(pk=instance.pk)
         if old_sale.status != 'entregado' and instance.status == 'entregado':
             # El estado ha cambiado a "entregado", decrementar el stock
-            for venta_producto in instance.ventaproducto_set.all():
+            for venta_producto in instance.detalles.all():
                 talla_producto = venta_producto.producto
                 talla_producto.cantidadInventario -= venta_producto.cantidad
                 talla_producto.save()
