@@ -175,7 +175,7 @@ class Venta(models.Model):
     
     @property
     def direccion_cliente(self):
-        direccion = self.cliente.direccion_set.first()
+        direccion = self.cliente.direcciones.first()
         if direccion is not None:
             return str(direccion)
         else:

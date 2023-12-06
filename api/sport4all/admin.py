@@ -17,6 +17,7 @@ from .forms import (
 
 admin.site.site_header = 'Sport4All Administration'
 admin.site.site_title = 'Sport4All'
+# admin.site.disable_action('delete_selected')
 
 #No necesitan personalizado
 admin.site.register(models.Iva)

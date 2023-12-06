@@ -38,6 +38,21 @@ class CompraProductoInLine(admin.TabularInline):
         else:
             return '-'
 
+    def has_add_permission(self, request, obj=None):
+        if obj and obj.status != 'en proceso':
+            return False
+        return super().has_add_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.status != 'en proceso':
+            return False
+        return super().has_delete_permission(request, obj)
+
+    def has_change_permission(self, request, obj=None):
+        if obj and obj.status != 'en proceso':
+            return False
+        return super().has_change_permission(request, obj)
+
     sub_Total.short_description = 'SubTotal'
 
 class VentaProductoInLine(admin.TabularInline):
@@ -51,12 +66,17 @@ class VentaProductoInLine(admin.TabularInline):
             return instance.precioUnitario * instance.cantidad
         else:
             return '-'
+    
+    def has_delete_permission(self, request, obj=None):
+        if obj:
+            return False
+        return super().has_delete_permission(request, obj)
 
     sub_Total.short_description = 'SubTotal'
 
 class TallaProductoAdmin(admin.ModelAdmin):
     list_filter = (StockMinFilter, 'talla',)
-    list_display = ('producto', 'talla','cantidadInventario', 'minStock', 'maxStock',)
+    list_display = ('producto', 'talla', 'color', 'cantidadInventario', 'minStock', 'maxStock',)
     search_fields = ('producto__nombre',)
     autocomplete_fields = ('producto',)
     readonly_fields = ('cantidadInventario', )
@@ -125,7 +145,13 @@ class CompraAdmin(admin.ModelAdmin):
         else:
             return str(obj.iva_porcentaje) + '%'
         
-    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            if obj.status == 'pagado' or obj.status == 'cancelado':
+                return ('folio', 'fecha', 'status', 'proveedor','subtotal', 'ivaTotal', 'total')
+            elif obj.status != 'en proceso':
+                return ('folio', 'fecha', 'proveedor','subtotal', 'ivaTotal', 'total')
+        return super().get_readonly_fields(request, obj)
 
     folio.short_description = 'Folio'
     ivaTotal.short_description = 'Importe'
@@ -150,5 +176,11 @@ class VentaAdmin(admin.ModelAdmin):
             return str(obj.iva_importe) + '$'
         else:
             return str(obj.iva_porcentaje) + '%'
+        
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            if obj.status == 'entregado':
+                return ('fecha', 'status', 'id', 'repartidor' ,'subtotal', 'ivaTotal', 'total', 'direccion_cliente', 'cliente', )
+        return super().get_readonly_fields(request, obj)
         
     ivaTotal.short_description = 'Importe'
