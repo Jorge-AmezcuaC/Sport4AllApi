@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TallaProducto, FotoProducto, CompraProducto, VentaProducto, Compra
+from .models import TallaProducto, FotoProducto, CompraProducto, VentaProducto, Compra, User
 from django.db.models import F
 from django import forms
 
@@ -182,5 +182,10 @@ class VentaAdmin(admin.ModelAdmin):
             if obj.status == 'entregado':
                 return ('fecha', 'status', 'id', 'repartidor' ,'subtotal', 'ivaTotal', 'total', 'direccion_cliente', 'cliente', )
         return super().get_readonly_fields(request, obj)
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'repartidor':
+            kwargs['queryset'] = User.objects.filter(role='repartidor')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
         
     ivaTotal.short_description = 'Importe'
